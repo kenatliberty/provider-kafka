@@ -3,11 +3,12 @@ package topic
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/crossplane-contrib/provider-kafka/apis/topic/v1alpha1"
 	"github.com/crossplane-contrib/provider-kafka/internal/clients/kafka"
 	"github.com/google/go-cmp/cmp"
 	"github.com/twmb/franz-go/pkg/kadm"
-	"testing"
 )
 
 var dataTesting = []byte(`{
@@ -15,7 +16,7 @@ var dataTesting = []byte(`{
 	"sasl": {
 	"mechanism": "PLAIN",
 	"username": "user",
-	"password": ""
+	"password": "P0Jn0ZK9MA"
 	}
 	}`)
 
@@ -340,6 +341,50 @@ func TestCreateDuplicateTopic(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestUpdate(t *testing.T) {
+
+	newAc, _ := kafka.NewAdminClient(dataTesting)
+
+	type args struct {
+		ctx     context.Context
+		client  *kadm.Client
+		desired *Topic
+	}
+	cases := map[string]struct {
+		name    string
+		args    args
+		want    *Topic
+		wantErr bool
+	}{
+		// need to create desired for test
+		// this should be put somewhere below
+		// the existing state needs to exist somewhere. that's
+		// what needs to be created. this can call the get method,
+		// which does work
+		"UpdateReplicationFactorFail": {
+			name: "UpdateReplicationFactorFail",
+			args: args{
+				ctx:    context.Background(),
+				client: newAc,
+				desired: &Topic{
+					Name:              "testTopic-1",
+					ReplicationFactor: 1,
+					Partitions:        1,
+					Config:            nil,
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := Update(tt.args.ctx, tt.args.client, tt.args.desired); (err != nil) != tt.wantErr {
+				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
 

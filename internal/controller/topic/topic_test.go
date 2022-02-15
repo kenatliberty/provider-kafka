@@ -2,6 +2,7 @@ package topic
 
 import (
 	"context"
+	"github.com/crossplane-contrib/provider-kafka/internal/clients/kafka"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -10,7 +11,19 @@ import (
 	"testing"
 )
 
-func Test_external_Observe(t *testing.T) {
+var dataTesting = []byte(`{
+		"brokers": [ "kafka-dev-0.kafka-dev-headless:9092"],
+	"sasl": {
+	"mechanism": "PLAIN",
+	"username": "user",
+	"password": ""
+	}
+	}`)
+
+func TestObserve(t *testing.T) {
+
+	newAc, _ := kafka.NewAdminClient(dataTesting)
+
 	type fields struct {
 		kafkaClient *kadm.Client
 		log         logging.Logger
@@ -19,16 +32,39 @@ func Test_external_Observe(t *testing.T) {
 		ctx context.Context
 		mg  resource.Managed
 	}
-	tests := map[string]struct {
+	cases := map[string]struct {
 		name    string
 		fields  fields
 		args    args
 		want    managed.ExternalObservation
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		"ObserveT1": {
+			fields: fields{
+				kafkaClient: newAc,
+				log:         nil,
+			},
+			name: "Working1",
+			args: args{
+				ctx: context.Background(),
+				mg: &Topic{
+					Name:              "testTopic-2",
+					ReplicationFactor: 1,
+					Partitions:        1,
+					Config:            nil,
+				},
+			},
+			want: want{
+				cr: aef,
+				result: managed.ExternalObservation{
+					ResourceExists:          true,
+					ResourceUpToDate:        false,
+					ResourceLateInitialized: false,
+				},
+			},
+		},
 	}
-	for _, tt := range tests {
+	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &external{
 				kafkaClient: tt.fields.kafkaClient,
