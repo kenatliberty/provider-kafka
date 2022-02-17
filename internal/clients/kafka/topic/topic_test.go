@@ -388,6 +388,7 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+/*
 func TestDelete(t *testing.T) {
 
 	newAc, _ := kafka.NewAdminClient(dataTesting)
@@ -456,3 +457,4 @@ func TestDelete(t *testing.T) {
 		})
 	}
 }
+*/

@@ -2,6 +2,8 @@ package topic
 
 import (
 	"context"
+	"fmt"
+	"github.com/crossplane-contrib/provider-kafka/apis/topic/v1alpha1"
 	"github.com/crossplane-contrib/provider-kafka/internal/clients/kafka"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
@@ -32,6 +34,11 @@ func TestObserve(t *testing.T) {
 		ctx context.Context
 		mg  resource.Managed
 	}
+
+	//l := logging.Logger()
+
+	logger := logging.Logger.Info("info-ng")
+
 	cases := map[string]struct {
 		name    string
 		fields  fields
@@ -42,35 +49,34 @@ func TestObserve(t *testing.T) {
 		"ObserveT1": {
 			fields: fields{
 				kafkaClient: newAc,
-				log:         nil,
+				log:         logger,
 			},
 			name: "Working1",
 			args: args{
 				ctx: context.Background(),
-				mg: &Topic{
-					Name:              "testTopic-2",
-					ReplicationFactor: 1,
-					Partitions:        1,
-					Config:            nil,
-				},
+				// need to look at styra and compare how they did it
+
+				mg: &v1alpha1.Topic{},
 			},
-			want: want{
-				cr: aef,
-				result: managed.ExternalObservation{
-					ResourceExists:          true,
-					ResourceUpToDate:        false,
-					ResourceLateInitialized: false,
-				},
+			want: managed.ExternalObservation{
+				ResourceExists:          true,
+				ResourceUpToDate:        true,
+				ResourceLateInitialized: true,
 			},
+			wantErr: false,
 		},
 	}
+
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &external{
 				kafkaClient: tt.fields.kafkaClient,
-				log:         tt.fields.log,
+				// the type
+				log: tt.fields.log,
 			}
+			fmt.Print(c)
 			got, err := c.Observe(tt.args.ctx, tt.args.mg)
+			fmt.Print(got)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Observe() error = %v, wantErr %v", err, tt.wantErr)
 				return
